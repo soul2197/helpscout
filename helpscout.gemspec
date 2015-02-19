@@ -14,7 +14,6 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'bundler', '>= 1.2.3'
   s.add_development_dependency 'jeweler', '~> 1.8.4'
-  s.add_development_dependency 'httparty', '>= 0'
   s.add_development_dependency 'simplecov', '>= 0'
   s.add_development_dependency 'reek', '~> 1.2.8'
   s.add_development_dependency 'rdoc', '>= 0'
