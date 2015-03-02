@@ -1055,4 +1055,32 @@ module HelpScout
       end
     end
   end
+
+  # Create Attachment
+  # http://developer.helpscout.net/conversations/create-attachment/
+  #
+  # Creates a new Attachment.
+  #
+  # Request
+  #  REST Method: POST
+  #  URL: https://api.helpscout.net/v1/attachments.json
+  #
+  #  POST Parameters
+  #  Name          Type          Required  Notes
+  #  attachment    Attachment    Yes
+  #
+
+  def create_attachment(attachment)
+    if !attachment
+      raise StandardError.new("Missing Attachment")
+    end
+
+    url = "/attachments.json"
+
+    begin
+      response = Client.create_item(@auth, url, attachment.to_json)
+    rescue StandardError => e
+      puts "Could not create attachment: #{e.message}"
+    end
+  end
 end

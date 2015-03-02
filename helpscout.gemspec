@@ -1,8 +1,8 @@
 Gem::Specification.new do |s|
   s.name = 'helpscout'
-  s.version = '0.0.6'
+  s.version = '0.0.7'
   s.authors = ['Daniel LaGrotta']
-  s.date = '2015-02-19'
+  s.date = '2015-03-02'
   s.description = ''
   s.files = %w(Gemfile README.markdown Rakefile VERSION helpscout.gemspec lib/helpscout.rb lib/helpscout/client.rb lib/helpscout/models.rb)
   s.homepage = 'http://github.com/soul2197/helpscout'
