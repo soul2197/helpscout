@@ -249,7 +249,10 @@ module HelpScout
           response["Location"]
         end
       else
-        raise StandardError.new("Server Response: #{response.code} #{response.message}")
+        message = "Server Response: #{response.code} #{response.message}"
+        message += " Error: #{response['error']}" if response['error'].present?
+        message += " (#{response['validationErrors'].to_json})" if response['validationErrors'].present?
+        raise StandardError.new(message)
       end
     end
 
@@ -573,7 +576,7 @@ module HelpScout
       begin
         response = Client.create_item(@auth, url, conversation.to_json)
       rescue StandardError => e
-        puts "Could not create conversation: #{e.message}"
+        raise StandardError, "Could not create conversation: #{e.message}"
       end
     end
 
@@ -599,7 +602,7 @@ module HelpScout
       begin
         response = Client.update_item(@auth, url, conversation.to_json)
       rescue StandardError => e
-        puts "Could not create conversation: #{e.message}"
+        raise StandardError, "Could not update conversation: #{e.message}"
       end
     end
 
@@ -1051,7 +1054,7 @@ module HelpScout
       begin
         response = Client.create_item(@auth, url, conversation_thread.to_json)
       rescue StandardError => e
-        puts "Could not create conversation_thread: #{e.message}\n#{e.backtrace}"
+        raise StandardError, "Could not create conversation thread: #{e.message}"
       end
     end
 
