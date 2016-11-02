@@ -815,7 +815,7 @@ module HelpScout
     #                threads, you need to retrieve the full conversation object
     #                via the Get Conversation call.
 
-    def conversations(
+    def conversations_with_customer(
       mailboxId,
       customerId,
       status=CONVERSATION_FILTER_STATUS_ALL,
