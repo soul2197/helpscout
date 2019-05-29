@@ -7,6 +7,7 @@ group :development do
   gem 'simplecov', :require => false
   gem "reek", "~> 1.2.8"
   gem "rdoc"
+  gem "pry"
 end
 
 gem "httparty"

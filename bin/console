@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require 'pry'
+
+require './lib/helpscout/v1/client.rb'
+require './lib/helpscout/v1/models.rb'
+require './lib/helpscout/v2/client.rb'
+require './lib/helpscout/v2/models.rb'
+
+Pry.start
