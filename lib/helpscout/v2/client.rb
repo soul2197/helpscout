@@ -94,6 +94,7 @@ module HelpScout::V2
       }
 
       response = Client.post(path, options)
+
       if response.code >= 400
         raise StandardError,
           "Failed to authenticate client: #{response.parsed_response["error"]}"
@@ -102,168 +103,172 @@ module HelpScout::V2
       response.parsed_response["access_token"]
     end
 
-
-    # Requests a single item from the Help Scout API. Should return either an
-    # item from the SingleItemEnvelope, or raise an error with an
-    # ErrorEnvelope.
-    #
-    # url     String  A string representing the url for the REST endpoint to be
-    #                 queried.
-    # params  Hash    A hash of GET parameters to use for this particular
-    #                 request.
-    #
-    # Response
-    #           Name    Type   Notes
-    #  Header   Status  Int    200
-    #  Body     item
-
-    def self.request_item(token, url, params = {})
-      item = nil
-
-      request_url = ""
-      request_url << url
+    # sends a GET request to the helpscout API and handles error responses
+    def self.request(token, url, params = {})
+      request_url = url
       if params
-        query = ""
-        params.each { |k,v| query += "#{k}=#{v}&" }
-        request_url << "?" + query
+        params_query = URI.encode_www_form(params)
+        request_url += "?#{params_query}"
       end
 
       begin
-        response = Client.get(request_url, {headers: { "Authorization" => "Bearer #{token}" }})
+        response = Client.get(request_url, { headers: { "Authorization" => "Bearer #{token}" } })
       rescue SocketError => se
         raise StandardError, se.message
       end
 
       if 200 <= response.code && response.code < 300
-        envelope = SingleItemEnvelope.new(response)
-        if envelope.item
-          item = envelope.item
-        end
+        response
       elsif 401 == response.code
         raise TokenExpired
       elsif 400 <= response.code && response.code < 500
-        if response["message"]
-          envelope = ErrorEnvelope.new(response)
-          raise StandardError, envelope.message
-        else
-          raise StandardError, response["error"]
-        end
+        raise StandardError, "Server Response: #{response.code} #{response.message}"
       else
-        raise StandardError, "Server Response: #{response.code}"
+        raise StandardError, "Server Response: #{response.code} #{response.message}"
       end
-
-      item
     end
 
 
-    # Requests a collections of items from the Help Scout API. Should return
-    # either an array of items from the CollectionsEnvelope, or raise an error
-    # with an ErrorEnvelope.
-    #
-    # Collections return a maximum of 50 records per page.
-    #
-    # url     String  A string representing the url for the REST endpoint to be
-    #                 queried.
-    # params  Hash    A hash of GET parameters to use for this particular
-    #                 request.
-    #
-    # Response
-    #           Name    Type   Notes
-    #  Header   Status  Int    200
-    #  Body     page    Int    Current page that was passed in on the request
-    #           pages   Int    Total number of pages available
-    #           count   Int    Total number of objects available
-    #           items   Array  Collection of objects
 
-    def self.request_items(token, url, params = {})
-      items = []
+    # # Requests a single item from the Help Scout API. Should return either an
+    # # item from the SingleItemEnvelope, or raise an error with an
+    # # ErrorEnvelope.
+    # #
+    # # url     String  A string representing the url for the REST endpoint to be
+    # #                 queried.
+    # # params  Hash    A hash of GET parameters to use for this particular
+    # #                 request.
+    # #
+    # # Response
+    # #           Name    Type   Notes
+    # #  Header   Status  Int    200
+    # #  Body     item
 
-      request_url = ""
-      request_url << url
-      if params
-        query = ""
-        params.each { |k,v| query += "#{k}=#{v}&" }
-        request_url << "?" + query
-      end
+    # def self.request_item(token, url, params = {})
+    #   item = nil
 
-      begin
-        response = Client.get(request_url, {headers: { "Authorization" => "Bearer #{token}" }})
-      rescue SocketError => se
-        raise StandardError, se.message
-      end
+    #   request_url = ""
+    #   request_url << url
+    #   if params
+    #     query = ""
+    #     params.each { |k,v| query += "#{k}=#{v}&" }
+    #     request_url << "?" + query
+    #   end
 
-      if 200 <= response.code && response.code < 300
-        envelope = CollectionsEnvelope.new(response)
-        if envelope.items
-          envelope.items.each do |item|
-            items << item
-          end
-        end
-      elsif 401 == response.code
-        raise TokenExpired
-      elsif 400 <= response.code && response.code < 500
-        if response["message"]
-          envelope = ErrorEnvelope.new(response)
-          raise StandardError, envelope.message
-        else
-          raise StandardError, response["error"]
-        end
-      else
-        raise StandardError, "Server Response: #{response.code}"
-      end
+    #   begin
+    #     response = Client.get(request_url, {headers: { "Authorization" => "Bearer #{token}" }})
+    #   rescue SocketError => se
+    #     raise StandardError, se.message
+    #   end
 
-      items
-    end
+    #   if 200 <= response.code && response.code < 300
+    #     response
+    #   elsif 401 == response.code
+    #     raise TokenExpired
+    #   elsif 400 <= response.code && response.code < 500
+    #     raise StandardError, "Server Response: #{response.code} #{response.message}"
+    #   else
+    #     raise StandardError, "Server Response: #{response.code} #{response["message"]}"
+    #   end
+    # end
 
 
-    # Requests a collections of items from the Help Scout API. Should return
-    # the total count for this collection, or raise an error with an
-    # ErrorEnvelope.
-    #
-    # url     String  A string representing the url for the REST endpoint to be
-    #                 queried.
-    # params  Hash    A hash of GET parameters to use for this particular
-    #                 request.
-    #
-    # Response
-    #           Name    Type   Notes
-    #  Header   Status  Int    200
-    #  Body     page    Int    Current page that was passed in on the request
-    #           pages   Int    Total number of pages available
-    #           count   Int    Total number of objects available
-    #           items   Array  Collection of objects
+    # # Requests a collections of items from the Help Scout API. Should return
+    # # either an array of items from the CollectionsEnvelope, or raise an error
+    # # with an ErrorEnvelope.
+    # #
+    # # Collections return a maximum of 50 records per page.
+    # #
+    # # url     String  A string representing the url for the REST endpoint to be
+    # #                 queried.
+    # # params  Hash    A hash of GET parameters to use for this particular
+    # #                 request.
+    # #
+    # # Response
+    # #           Name    Type   Notes
+    # #  Header   Status  Int    200
+    # #  Body     page    Int    Current page that was passed in on the request
+    # #           pages   Int    Total number of pages available
+    # #           count   Int    Total number of objects available
+    # #           items   Array  Collection of objects
 
-    def self.request_count(token, url, params = {})
-      request_url = ""
-      request_url << url
-      if params
-        query = ""
-        params.each { |k,v| query += "#{k}=#{v}&" }
-        request_url << "?" + query
-      end
+    # def self.request_items(token, url, params = {})
+    #   items = []
 
-      begin
-        response = Client.get(request_url, {headers: { "Authorization" => "Bearer #{token}" }})
-      rescue SocketError => se
-        raise StandardError, se.message
-      end
+    #   request_url = ""
+    #   request_url << url
+    #   if params
+    #     query = ""
+    #     params.each { |k,v| query += "#{k}=#{v}&" }
+    #     request_url << "?" + query
+    #   end
 
-      if 200 <= response.code && response.code < 300
-        envelope = CollectionsEnvelope.new(response)
-        envelope.count
-      elsif 401 == response.code
-        raise TokenExpired
-      elsif 400 <= response.code && response.code < 500
-        if response["message"]
-          envelope = ErrorEnvelope.new(response)
-          raise StandardError, envelope.message
-        else
-          raise StandardError, response["error"]
-        end
-      else
-        raise StandardError, "Server Response: #{response.code}"
-      end
-    end
+    #   begin
+    #     response = Client.get(request_url, {headers: { "Authorization" => "Bearer #{token}" }})
+    #   rescue SocketError => se
+    #     raise StandardError, se.message
+    #   end
+
+    #   if 200 <= response.code && response.code < 300
+    #     response
+    #   elsif 401 == response.code
+    #     raise TokenExpired
+    #   elsif 400 <= response.code && response.code < 500
+    #     raise StandardError, "Server Response: #{response.code} #{response.message}"
+    #   else
+    #     raise StandardError, "Server Response: #{response.code} #{response.message}"
+    #   end
+    # end
+
+
+    # # Requests a collections of items from the Help Scout API. Should return
+    # # the total count for this collection, or raise an error with an
+    # # ErrorEnvelope.
+    # #
+    # # url     String  A string representing the url for the REST endpoint to be
+    # #                 queried.
+    # # params  Hash    A hash of GET parameters to use for this particular
+    # #                 request.
+    # #
+    # # Response
+    # #           Name    Type   Notes
+    # #  Header   Status  Int    200
+    # #  Body     page    Int    Current page that was passed in on the request
+    # #           pages   Int    Total number of pages available
+    # #           count   Int    Total number of objects available
+    # #           items   Array  Collection of objects
+
+    # def self.request_count(token, url, params = {})
+    #   request_url = ""
+    #   request_url << url
+    #   if params
+    #     query = ""
+    #     params.each { |k,v| query += "#{k}=#{v}&" }
+    #     request_url << "?" + query
+    #   end
+
+    #   begin
+    #     response = Client.get(request_url, {headers: { "Authorization" => "Bearer #{token}" }})
+    #   rescue SocketError => se
+    #     raise StandardError, se.message
+    #   end
+
+    #   if 200 <= response.code && response.code < 300
+    #     envelope = CollectionsEnvelope.new(response)
+    #     envelope.count
+    #   elsif 401 == response.code
+    #     raise TokenExpired
+    #   elsif 400 <= response.code && response.code < 500
+    #     if response["message"]
+    #       envelope = ErrorEnvelope.new(response)
+    #       raise StandardError, envelope.message
+    #     else
+    #       raise StandardError, response["error"]
+    #     end
+    #   else
+    #     raise StandardError, "Server Response: #{response.code}"
+    #   end
+    # end
 
 
     # Sends a POST request to create a single item from the Help Scout API.
@@ -276,6 +281,7 @@ module HelpScout::V2
     #  Name      Type    Notes
     #  Location  String  https://api.helpscout.net/v1/conversations/{id}.json
 
+    # TODO: this called post
     def self.create_item(token, url, params = {})
       begin
         response = Client.post(url, {:headers => { 'Content-Type' => 'application/json',  "Authorization" => "Bearer #{token}" }, :body => params })
@@ -309,6 +315,7 @@ module HelpScout::V2
     #  Response  Name    Type     Notes
     #  Header    Status  Integer  200
 
+    # TODO: this with patch
     def self.update_item(token, url, params = {})
       begin
         response = Client.put(url, { :headers => { 'Content-Type' => 'application/json',  "Authorization" => "Bearer #{token}"}, :body => params })
@@ -337,6 +344,7 @@ module HelpScout::V2
     #           Name    Type   Notes
     #  Header   Status  Int    200
 
+    # TODO: this with patch
     def self.post_request(token, url)
       begin
         response = Client.post(url, {headers:  {"Authorization" => "Bearer #{token}"}})
@@ -387,12 +395,45 @@ module HelpScout::V2
       @token = Client.request_token(@client_id, @client_secret)
     end
 
-    # 
+    # retries a block if not authed
     def with_auth(&block)
       block.call(@token)
     rescue TokenExpired
       refresh_token
       block.call(@token)
+    end
+
+    # requests a given number of items for a paginated resource.
+    # if the limit is zero, requests _everything_
+    # which is we shouldn't be doing often (to avoid rate limiting)
+    # Also makes the assumption that the items are an array of the
+    # in the response["_embedded"][item_name]
+    # TODO: rewrite moar concisely
+    def request_multiple(url, item_name, limit = 500, params = {})
+      items = []
+
+      response = with_auth do |token|
+        Client.request(token, url, params)
+      end
+      
+      total_pages = response["page"]["totalPages"]
+      items += response["_embedded"][item_name]
+      page = 2
+
+      while (limit == 0 || items.count < limit) && page <= total_pages
+        response = with_auth do |token|
+          Client.request(token, url, params.merge({ page: page }))
+        end
+
+        page += 1
+        items += response["_embedded"][item_name]
+      end
+
+      if limit > 0 && items.count > limit
+        items = items[0...limit]
+      end
+
+      items
     end
 
     # Get User
@@ -415,20 +456,20 @@ module HelpScout::V2
     #  item  User
 
     def user(userId)
-      url = "/users/#{userId}.json"
-      item = Client.request_item(@auth, url, nil)
-      user = nil
-      if item
-        user = User.new(item)
+      url = "/users/#{userId}"
+
+      response = with_auth do |token|
+        Client.request(token, url)
       end
-      user
+
+      user = User.new(response)
     end
 
 
-    # List Users
+    # List (some) Users
     # http://developer.helpscout.net/users/
     #
-    # Fetches all users
+    # Fetches first 50 users with optional params (email, mailbox_id)
     #
     # Request
     #  REST Method: GET
@@ -442,24 +483,27 @@ module HelpScout::V2
     #  Name   Type
     #  items  Array  Collection of User objects
 
-    def users
+    def users(params = {})
       url = "/users"
-      items = with_auth do |token|
-        Client.request_items(token, url, :page => 1)
+      params = { page: 1 }.merge(params)
+
+      response = with_auth do |token|
+        Client.request(token, url, params)
       end
-      users = []
-      items.each do |item|
-        users << User.new(item)
+      
+      response["_embedded"]["users"].map do |item|
+        User.new(item)
       end
-      users
     end
 
-
+    
     # List Users by Mailbox
     # http://developer.helpscout.net/users/
     #
-    # Fetches all users in a single mailbox
-    #
+
+    # Fetches first 50 users in a single mailbox
+
+    # TODO: this endpoint doesn't exist. rewrite doc to point to /users?mailbox={mailbox_id}
     # mailboxId  Int  id of the Mailbox being requested
     #
     # Request
@@ -473,15 +517,10 @@ module HelpScout::V2
     # Response
     #  Name   Type
     #  items  Array  Collection of User objects
-
-    def users_in_mailbox(mailboxId)
-      url ="/mailboxes/#{mailboxId}/users.json"
-      items = Client.request_items(@auth, url, :page => 1)
-      users = []
-      items.each do |item|
-        users << User.new(item)
-      end
-      users
+    
+    # TODO: check if we actually need to fetch _all_ users from inbox since v1 supported this
+    def users_in_mailbox(mailbox_id)
+      users({mailbox: mailbox_id})
     end
 
 
@@ -502,8 +541,9 @@ module HelpScout::V2
     #  Name   Type
     #  items  Array  Collection of Mailbox objects
 
+    # TODO: check if we actually need to fetch _all_ mailboxes from inbox since v1 supported this
     def mailboxes
-      url = "/mailboxes.json"
+      url = "/mailboxes"
       mailboxes = []
       begin
         items = Client.request_items(@auth, url, {})
@@ -686,6 +726,7 @@ module HelpScout::V2
     # * CONVERSATION_FILTER_STATUS_ACTIVE
     # * CONVERSATION_FILTER_STATUS_PENDING
     #
+    # TODO: rewrite documentation becuase this endpoint has been changed to /conversations?mailbox={mailboxId}
     # Request
     #  REST Method: GET
     #  URL: https://api.helpscout.net/v1/mailboxes/{mailboxId}/conversations.json
@@ -710,43 +751,27 @@ module HelpScout::V2
     #                threads, you need to retrieve the full conversation object
     #                via the Get Conversation call.
 
-    CONVERSATION_FILTER_STATUS_ACTIVE = "active"
-    CONVERSATION_FILTER_STATUS_ALL = "all"
-    CONVERSATION_FILTER_STATUS_PENDING = "pending"
+    VALID_CONVERSATION_STATUSES = ["active", "all", "closed", "open", "pending", "spam"]
 
-    def conversations(mailboxId, status, limit=0, modifiedSince)
-      url = "/mailboxes/#{mailboxId}/conversations.json"
+    def conversations(mailboxId, status = "all", limit = 0, modifiedSince = nil)
+      url = "/conversations"
+      params = { mailbox: mailboxId }
 
-      page = 1
-      options = {}
-
-      if limit < 0
-        limit = 0
-      end
-
-      if status && (status == CONVERSATION_FILTER_STATUS_ACTIVE || status == CONVERSATION_FILTER_STATUS_ALL || status == CONVERSATION_FILTER_STATUS_PENDING)
-        options["status"] = status
+      if status && (VALID_CONVERSATION_STATUSES.include?(status))
+        params["status"] = status
       end
 
       if modifiedSince
-        options["modifiedSince"] = modifiedSince
+        params["modifiedSince"] = modifiedSince
       end
 
-      conversations = []
-
       begin
-        options["page"] = page
-        items = Client.request_items(@auth, url, options)
-        items.each do |item|
-          conversations << Conversation.new(item)
+        items = request_multiple(url, "conversations", limit, params)
+        conversations = items.map do |item|
+          Conversation.new(item)
         end
-        page = page + 1
       rescue StandardError => e
         puts "List Conversations Request failed: #{e.message}"
-      end while items && items.count > 0 && (limit == 0 || conversations.count < limit)
-
-      if limit > 0 && conversations.count > limit
-        conversations = conversations[0..limit-1]
       end
 
       conversations
@@ -1230,6 +1255,6 @@ module HelpScout::V2
       rescue StandardError => e
         puts "Could not create attachment: #{e.message}"
       end
-    end
+    end 
   end
 end

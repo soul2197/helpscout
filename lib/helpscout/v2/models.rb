@@ -10,45 +10,46 @@
 
 module HelpScout::V2
 
-  # Response Envelopes
-  # http://developer.helpscout.net/
-  #
-  # The Help Scout API will return one of three envelopes, depending upon the 
-  # request issued.
+  # Remove me
+  # # Response Envelopes
+  # # http://developer.helpscout.net/
+  # #
+  # # The Help Scout API will return one of three envelopes, depending upon the 
+  # # request issued.
   
-  # Single Item Envelope
-  class SingleItemEnvelope
-    attr_reader :item
+  # # Single Item Envelope
+  # class SingleItemEnvelope
+  #   attr_reader :item
 
-    # Creates a new SingleItemEnvelope object from a Hash of attributes
-    def initialize(object)
-      @item = object["item"]
-    end
-  end
+  #   # Creates a new SingleItemEnvelope object from a Hash of attributes
+  #   def initialize(object)
+  #     @item = object["item"]
+  #   end
+  # end
 
-  # Collections Envelope
-  class CollectionsEnvelope
-    attr_reader :page, :pages, :count, :items
+  # # Collections Envelope
+  # class CollectionsEnvelope
+  #   attr_reader :page, :pages, :count, :items
     
-    # Creates a new CollectionsEnvelope object from a Hash of attributes
-    def initialize(object)
-      @page = object["page"]
-      @pages = object["pages"]
-      @count = object["count"]
-      @items = object["items"]
-    end
-  end
+  #   # Creates a new CollectionsEnvelope object from a Hash of attributes
+  #   def initialize(object)
+  #     @page = object["page"]
+  #     @pages = object["pages"]
+  #     @count = object["count"]
+  #     @items = object["items"]
+  #   end
+  # end
 
-  # Error Envelope
-  class ErrorEnvelope
-    attr_reader :status, :message
+  # # Error Envelope
+  # class ErrorEnvelope
+  #   attr_reader :status, :message
 
-    # Creates a new ErrorEnvelope object from a Hash of attributes
-    def initialize(object)
-      @status = object["status"]
-      @message = object["message"]
-    end    
-  end
+  #   # Creates a new ErrorEnvelope object from a Hash of attributes
+  #   def initialize(object)
+  #     @status = object["status"]
+  #     @message = object["message"]
+  #   end    
+  # end
 
 
   # Client Objects
@@ -176,28 +177,34 @@ module HelpScout::V2
       @id = object["id"]
       @type = object["type"]
       @folderId = object["folderId"]
-      @isDraft = object["isDraft"]
+      @isDraft = object["isDraft"]  ## no longer exists in V2
       @number = object["number"]
-      @owner = Person.new(object["owner"]) if object["owner"]
+      @owner = Person.new(object["assignee"]) if object["assignee"]
+
+      # this is no longer embedded consider making this a method on the class
+      # which requests the link in object["_links"]["mailbox"]
       @mailbox = Mailbox.new(object["mailbox"]) if object["mailbox"]
-      @customer = Person.new(object["customer"]) if object["customer"]
-      @threadCount = object["threadCount"]
+      
+      @customer = Person.new(object["primaryCustomer"]) if object["primaryCustomer"]
+      @threadCount = object["threads"]
       @status = object["status"]
       @subject = object["subject"]
       @preview = object["preview"]
-      @closedBy = Person.new(object["closedBy"]) if object["closedBy"]
-      @createdBy = Person.new(object["person"]) if object["person"]
+      @closedBy = Person.new(object["closedBy"]) if (object["closedBy"] && object["closedBy"] != 0)
+      @createdBy = Person.new(object["createdBy"]) if object["createdBy"]
       @source = Source.new(object["source"]) if object["source"]
       @cc = object["cc"]
       @bcc = object["bcc"]
-      @tags = object["tags"]
+      @tags = parse_tags(object["tags"]) if object["tags"]
 
+      # this also doesn't exist, consider making this a method which 
+      # requests the link in object["_links"]["threads"]
       @threads = []
-      if object["threads"]
-        object["threads"].each do |thread|
-          @threads << Thread.new(thread)
-        end
-      end
+      # if object["threads"]
+      #   object["threads"].each do |thread|
+      #     @threads << Thread.new(thread)
+      #   end
+      # end
 
       @url = "https://secure.helpscout.net/conversation/#{@id}/#{@number}/"
     end
@@ -207,6 +214,10 @@ module HelpScout::V2
       "Last Modified: #{@modifiedAt}\nStatus: #{@status}\nAssigned to: #{@owner}\nSubject: #{@subject}\n#{@preview}"
     end
 
+    # changes an array of tag hashes to an array of tag strings
+    def parse_tags(tags)
+      tags.map { |tag_hash| tag_hash["tag"] }
+    end
 
     # Conversation::Thread
     # http://developer.helpscout.net/objects/conversation/thread/
