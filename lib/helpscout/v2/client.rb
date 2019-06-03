@@ -669,17 +669,11 @@ module HelpScout::V2
     #
 
     def create_conversation(conversation)
-      if !conversation
-        raise StandardError.new("Missing Conversation")
-      end
+      raise StandardError.new("Missing Conversation") if !conversation
 
-      url = "/conversations.json"
+      url = '/conversations'
 
-      begin
-        response = Client.create_item(@auth, url, conversation.to_json)
-      rescue StandardError => e
-        raise StandardError, "Could not create conversation: #{e.message}"
-      end
+      with_auth { |token| Client.create_item(token, url, conversation.to_json) }
     end
 
     # Update Conversation
