@@ -46,6 +46,7 @@ module HelpScout
     base_uri 'https://api.helpscout.net/v1'
 
     @@settings ||= nil
+    @@default_headers ||= {}
 
     # Returns the current Help Scout Client settings.
     # If no settings have been loaded yet, this function will load its
