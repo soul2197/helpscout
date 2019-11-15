@@ -46,6 +46,7 @@ module HelpScout
     base_uri 'https://api.helpscout.net/v1'
 
     @@settings ||= nil
+    @@default_headers ||= {}
 
     # Returns the current Help Scout Client settings.
     # If no settings have been loaded yet, this function will load its
@@ -67,6 +68,13 @@ module HelpScout
       @@settings
     end
 
+    # Returns a hash resulting from the merge of call specific headers
+    # into default headers
+
+    def self.build_headers(headers)
+      headers = {} if headers.nil?
+      @@default_headers.merge(headers)
+    end
 
     # Requests a single item from the Help Scout API. Should return either an
     # item from the SingleItemEnvelope, or raise an error with an
@@ -94,7 +102,10 @@ module HelpScout
       end
 
       begin
-        response = Client.get(request_url, {:basic_auth => auth})
+        response = Client.get(request_url, {
+                                :basic_auth => auth,
+                                :headers => Client.build_headers({})
+                              })
       rescue SocketError => se
         raise StandardError, se.message
       end
@@ -150,7 +161,10 @@ module HelpScout
       end
 
       begin
-        response = Client.get(request_url, {:basic_auth => auth})
+        response = Client.get(request_url, {
+                                :basic_auth => auth,
+                                :headers => Client.build_headers({})
+                              })
       rescue SocketError => se
         raise StandardError, se.message
       end
@@ -204,7 +218,10 @@ module HelpScout
       end
 
       begin
-        response = Client.get(request_url, {:basic_auth => auth})
+        response = Client.get(request_url, {
+                                :basic_auth => auth,
+                                :headers => Client.build_headers({})
+                              })
       rescue SocketError => se
         raise StandardError, se.message
       end
@@ -237,7 +254,11 @@ module HelpScout
 
     def self.create_item(auth, url, params = {})
       begin
-        response = Client.post(url, {:basic_auth => auth, :headers => { 'Content-Type' => 'application/json' }, :body => params })
+        response = Client.post(url, {
+                                 :basic_auth => auth,
+                                 :headers => Client.build_headers({ 'Content-Type' => 'application/json' }),
+                                 :body => params
+                               })
       rescue SocketError => se
         raise StandardError, se.message
       end
@@ -268,7 +289,11 @@ module HelpScout
 
     def self.update_item(auth, url, params = {})
       begin
-        response = Client.put(url, {:basic_auth => auth, :headers => { 'Content-Type' => 'application/json' }, :body => params })
+        response = Client.put(url, {
+                                :basic_auth => auth,
+                                :headers => Client.build_headers({ 'Content-Type' => 'application/json' }),
+                                :body => params
+                              })
       rescue SocketError => se
         raise StandardError, se.message
       end
@@ -294,7 +319,10 @@ module HelpScout
 
     def self.post_request(auth, url)
       begin
-        response = Client.post(url, {:basic_auth => auth})
+        response = Client.post(url, {
+                                 :basic_auth => auth,
+                                 :headers => Client.build_headers({})
+                               })
       rescue SocketError => se
         raise StandardError, se.message
       end
@@ -322,7 +350,7 @@ module HelpScout
     # key  String  Help Scout API Key. Optional. If not passed, the key will be
     #              loaded from @@settings, which defaults to helpscout.yml.
 
-    def initialize(key=nil)
+    def initialize(key=nil, default_headers={})
       Client.settings
 
       if key.nil?
@@ -332,6 +360,9 @@ module HelpScout
       # The Help Scout API uses Basic Auth, where username is your API Key.
       # Password can be any arbitrary non-zero-length string.
       @auth = { :username => key, :password => "X" }
+
+      # Default headers that will be sent with all requests.
+      @@default_headers = default_headers || {}
     end
 
 
