@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name = 'helpscout'
-  s.version = '0.0.7'
+  s.version = '0.0.8'
   s.authors = ['Daniel LaGrotta']
   s.date = '2015-03-02'
   s.description = ''
