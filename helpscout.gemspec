@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
   s.date = '2015-03-02'
   s.description = ''
   s.files = %w(Gemfile README.markdown Rakefile VERSION helpscout.gemspec lib/helpscout.rb lib/helpscout/client.rb lib/helpscout/models.rb)
-  s.homepage = 'http://github.com/soul2197/helpscout'
+  s.homepage = 'https://github.com/opendoor-labs/helpscout'
   s.license = 'MIT'
   s.require_paths = ['lib']
   s.summary = 'HelpScout API Wrapper'
